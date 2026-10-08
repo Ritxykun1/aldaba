@@ -1,0 +1,7 @@
+/vendor/
+/.env
+/.phpunit.cache/
+/storage/cache/*
+!/storage/cache/.gitkeep
+.idea/
+.vscode/

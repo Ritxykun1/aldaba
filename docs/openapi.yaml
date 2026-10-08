@@ -1,0 +1,140 @@
+openapi: 3.0.3
+info:
+  title: Aldaba - Recipes API
+  version: 1.0.0
+  description: |
+    Looks up a recipe by name using the [Spoonacular API](https://spoonacular.com/food-api)
+    and returns the first match. Successful lookups are cached per normalized name.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/recipes:
+    get:
+      summary: Find a recipe by name
+      description: Searches Spoonacular and returns only the first result.
+      operationId: findRecipeByName
+      parameters:
+        - name: name
+          in: query
+          required: true
+          description: Recipe name. Case, extra spaces and punctuation do not matter for the cache.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          example: pasta carbonara
+      responses:
+        '200':
+          description: Recipe found
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Recipe'
+        '404':
+          description: No recipe matches the name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  message: "No recipe found for 'xyzzy'."
+        '405':
+          description: Method other than GET
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: "`name` is missing, empty, longer than 100 characters or has no letters or numbers"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  message: "The 'name' query parameter must not be empty."
+        '502':
+          description: Spoonacular could not be reached, rejected the API key or returned an invalid response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  message: The recipe provider returned an error.
+        '503':
+          description: Spoonacular quota or rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  message: The recipe provider is temporarily unavailable. Try again later.
+        '504':
+          description: Spoonacular did not answer within SPOONACULAR_TIMEOUT seconds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  message: The recipe provider did not respond in time.
+        '500':
+          description: Unexpected error (details are only written to the server log)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  message: Internal server error.
+components:
+  schemas:
+    Recipe:
+      type: object
+      required: [name, ready_in_minutes, servings, ingredients, instructions, image]
+      properties:
+        name:
+          type: string
+          example: Pasta Carbonara
+        ready_in_minutes:
+          type: integer
+          nullable: true
+          example: 25
+        servings:
+          type: integer
+          nullable: true
+          example: 4
+        ingredients:
+          type: array
+          items:
+            type: string
+          example: ["400g spaghetti", "4 egg yolks", "100g guanciale"]
+        instructions:
+          type: array
+          nullable: true
+          description: Preparation steps in order, or null when Spoonacular has none.
+          items:
+            type: string
+          example: ["Boil the pasta.", "Fry the guanciale.", "Mix with the yolks off the heat."]
+        image:
+          type: string
+          format: uri
+          nullable: true
+          example: https://img.spoonacular.com/recipes/654959-556x370.jpg
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [message]
+          properties:
+            message:
+              type: string
