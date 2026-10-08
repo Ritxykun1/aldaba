@@ -22,7 +22,7 @@ Incluye caché en ficheros, Docker, documentación OpenAPI/Swagger y tests con P
 ## Instalación
 
 ```bash
-git clone <url-del-repositorio> recipe-api
+git clone https://github.com/Ritxykun1/aldaba.git recipe-api
 cd recipe-api
 cp .env.example .env
 composer install        # no es necesario si usas Docker
